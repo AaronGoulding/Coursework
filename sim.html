@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<canvas id="canvas" width="900" height="900"></canvas>
+
+<script type="text/javascript">
+    cars = new Array();
+    roads = new Array();
+    junctions = new Array();
+
+    roads.push(new road(900, 5, 0, 450))
+    roads.push(new road(5, 900, 580, 0))
+    roads.push(new road(5, 900, 450, 0))
+    roads.push(new road(5, 900, 260, 0))
+    
+    //Finds all of the junctions
+    for (var h = 0; h < roads.length; h++) {
+        //Takes all horizontal roads
+        if (roads[h].width == 900) {
+            for (var v = 0; v < roads.length; v++) {
+                //Gets all Vertical roads
+                if (roads[v].height == 900) {
+                    junctions.push(new junction(roads[v].x + 2, roads[h].y + 2, "green", "red"));
+                }
+            }
+        }
+    }
+
+
+    //Get random integer
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    //Class for cars
+    function car(x, y, velX, velY, height, width) {
+        this.x = x;
+        this.y = y;
+        this.velX = velX;
+        this.velY = velY;
+        this.height = height;
+        this.width = width
+
+        this.update = function () {
+            for (var v = 0; v < junctions.length; v++) {
+                //LOOK AT THIS BIT!!!!!!!! =================================================================================================================================================================
+                if (junctions[v].area.indexOf((this.x + this.velX, this.y + this.velY)) > -1) {
+                    if (junctions[v].horizontalState == "green") {
+                        console.log("horizontal")
+                        this.x += this.velX;
+                    } else if (junctions[v].verticalState == "green") {
+                        console.log("vertical")
+                        this.y += this.velY;
+                    }
+                }
+            }
+            this.x += this.velX;
+            this.y += this.velY;
+        }
+    }
+
+        //Class for roads
+        function road(width, height, x, y) {
+            this.width = width;
+            this.height = height;
+            this.x = x;
+            this.y = y;
+        }
+
+        //Class for junctions
+        function junction(x, y, horizontalState, verticalState) {
+            this.x = x;
+            this.y = y;
+            this.area = []
+            for (var i = 0; i < 5; i++) {
+                for (var v = 0; v < 5; v++) {
+                    this.area.push([this.x + i, this.y + v])
+                }
+            }
+            this.horizontalState = horizontalState;
+            this.verticalState = verticalState;
+            // sets up traffic lights 1 = left, 2 = right, 3 = up, 4 = down
+            this.lights = [new light(this.x - 4, this.y - 2, this.horizontalState), new light(this.x + 3, this.y + 1, this.horizontalState), new light(this.x + 1, this.y - 4, this.verticalState), new light(this.x - 2, this.y + 3, this.verticalState)];
+            this.update = function (horizontalState, verticalState) {
+                this.horizontalState = horizontalState;
+                this.verticalState = verticalState;
+            }
+        }
+        function light(x, y, state) {
+            this.x = x;
+            this.y = y;
+            this.state = state;
+        }
+
+        //Adds new cars at random intervals
+        function addCar() {
+            road = getRandomInt(0, roads.length - 1);
+            direction = getRandomInt(0, 1);
+            if (roads[road].width == 900) {
+                if (direction == 1) {
+                    //car going right
+                    cars.push(new car(1, roads[road].y, 1, 0, 2, 4));
+                } else {
+                    //car going left
+                    cars.push(new car(899, roads[road].y + 3, -1, 0, 2, 4));
+                }
+            } else {
+                if (direction == 1) {
+                    //car going up
+                    cars.push(new car(roads[road].x, 899, 0, -1, 4, 2));
+                } else {
+                    //car going down
+                    cars.push(new car(roads[road].x + 3, 1, 0, 1, 4, 2));
+                }
+            }
+        }
+
+        window.onload = function () {
+            c = document.getElementById('canvas');
+            cc = c.getContext('2d');
+            setInterval(render, 1000 / 30);
+            setInterval(addCar, getRandomInt(500, 2000));
+        }
+
+        function render() {
+            cc.fillStyle = 'black';
+            cc.fillRect(0, 0, c.width, c.height);
+            //Roads
+            for (var i = 0; i < roads.length; i++) {
+                cc.fillStyle = '#282828';
+                cc.fillRect(roads[i].x, roads[i].y, roads[i].width, roads[i].height);
+            }
+            //Cars
+            for (var i = 0; i < cars.length; i++) {
+                cc.fillStyle = 'white';
+                cars[i].update();
+                cc.fillRect(cars[i].x, cars[i].y, cars[i].width, cars[i].height);
+            }
+            //lights
+            for (var i = 0; i < junctions.length; i++) {
+                for (var p = 0; p < 4; p++) {
+                    cc.fillStyle = junctions[i].lights[p].state;
+                    cc.fillRect(junctions[i].lights[p].x, junctions[i].lights[p].y, 2, 2);
+                }
+            }
+        }
+</script>
